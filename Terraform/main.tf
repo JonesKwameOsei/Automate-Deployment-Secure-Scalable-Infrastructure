@@ -254,7 +254,7 @@ resource "aws_nat_gateway" "ngw" {
   allocation_id = aws_eip.elastic_web.id 
   subnet_id     = aws_subnet.public-subnet-2.id
   tags = {
-    Name = "${local.resource_name}-ngw"
+    Name = "${local.resource_name}-Ngw"
   }
 }
 
