@@ -839,18 +839,17 @@ Here is a condensed version of the text in English:
 
 ## Code Deployment with GitHub Actions
 
-This project uses a GitHub Actions workflow to automate the code deployment process. The workflow consists of the following steps:
+This project uses a GitHub Actions workflow and **pipeline** to automate the code deployment process. 
+1. Create the action.yaml wokflows file: The workflow consists of the following steps:
+- Checkout the repository to get the code.
+- Set up the necessary Terraform version and Azure provider.
+- Run `terraform init` to initialize the working directory.
+- Run `terraform validate` to check the configuration syntax and validity.
+- Run `terraform apply` to deploy the infrastructure changes.
 
-1. Checkout the repository to get the code.
-2. Set up the necessary Terraform version and Azure provider.
-3. Run `terraform init` to initialize the working directory.
-4. Run `terraform validate` to check the configuration syntax and validity.
-5. Run `terraform apply` to deploy the infrastructure changes.
-
-This workflow eliminates the need for manual command-line deployment, making the process more efficient and reliable.
+This workflow eliminates the need for manual command-line deployment, making the process more efficient and reliable. It configured like this:
 
 ```
-
 name: Deploy Infrastructe
 
 on:
@@ -892,10 +891,26 @@ jobs:
         id: apply
         run: terraform apply --auto-approve
 ```
+2. Create a new branch to push changes into the main repo branch
+```
+git checkout -b deployNginxWebapp
+```
+3. Add configuration files and workflow action yaml file
+```
+git add .
+```
 
+4. Check the files modified
+```
+git status
+```
+5. Commit the changes to a staging area
+```
+git commit -m "Added configuration files"
+```
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/44d460ce-cb54-4aef-aa60-482a965f5197)<p>
 
-
-
+6. Create and merge pull request 
 
 
 
