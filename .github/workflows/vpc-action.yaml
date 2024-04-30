@@ -1,21 +1,26 @@
 name: Deploy VPC
 
 on:
+  workflow_dispatch:
+    inputs:
+      terraform_action:
+        type: choice
+        description: select terraform action
+        options:
+        - apply
+        - destroy
+        required: true
   push:
     branches:
       - main
 
 jobs:
-  deploy_site:
+  deploy_vpc:
     name: Terraform Deploy VPC-Resources
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Terraform
-
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
     - name: Checkout Repo
@@ -23,6 +28,15 @@ jobs:
 
     - name: Terraform init 
       run: terraform init 
+    
+    - name: Check if VPC exists
+      id: check_vpc
+      run: |
+        if terraform state show aws_vpc.my_vpc >/dev/null 2>&1; then
+          echo "::set-output name=vpc_exists::true"
+        else
+          echo "::set-output name=vpc_exists::false"
+        fi
       
     - name: Terraform Validate
       run: terraform validate
@@ -30,5 +44,33 @@ jobs:
     - name: Terraform Plan 
       run: terraform plan 
         
-    - name: Terraform apply 
+    - name: Terraform Apply
+      if: ${{ github.event.inputs.terraform_action == 'apply' && steps.check_vpc.outputs.vpc_exists != 'true' }}
       run: terraform apply --auto-approve 
+
+    - name: Terraform Destroy
+      if: ${{ github.event.inputs.terraform_action == 'destroy' && steps.check_vpc.outputs.vpc_exists == 'true' }}
+      run: terraform destroy --auto-approve  
+
+  trigger_ec2_workflow:
+    needs: deploy_vpc
+    runs-on: ubuntu-latest
+    steps:
+    - name: Trigger EC2 Workflow
+      uses: actions/github-script@0.10.7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { data: workflows } = await github.actions.listRepoWorkflows({
+            owner: context.repo.owner,
+            repo: context.repo.repo
+          });
+
+          const ec2Workflow = workflows.workflows.find(workflow => workflow.name === "Deploy EC2 Instance");
+          if (ec2Workflow) {
+            await github.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: ec2Workflow.id
+            });
+          }
