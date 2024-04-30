@@ -40,9 +40,11 @@ git clone <repo url>
 ```
 2. Create an local directory
 ```
-mkdir jones-osei-tf-project
+mkdir Terraform
+
+mkdir -p .github/workflows
 ```
-3. Create subfolder as the configuration requires.
+3. Create files in the **Terraform** folder as the configuration requires.
 
 ## Virtual Private Cloud (VPC) Confidguration
 We will create a **VPC** with:
