@@ -9,7 +9,7 @@ apt install nginx -y
 # Enable Nginx to start on system boot
 systemctl enable nginx
 
-# Start Nginx service
+# Start Nginx service to be accessed on web
 systemctl start nginx
 
 # Create a simple HTML file with Hello World message
