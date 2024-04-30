@@ -144,6 +144,109 @@ variable "private_ips" {
   default     = ["10.0.0.50"]
   description = "Private IP for EC2 instance"
 }
+
+# set variables VPC 
+variable "region" {
+  default     = ["eu-west-2"]
+  description = "AWS Region for deployment"
+  type        = list(any)
+}
+
+# variables sets for the subnets within AZs. 
+variable "availability_zones" {
+  default     = ["eu-west-2a", "eu-west-2b", "eu-west-2c"]
+  description = "AWS region az for subnet deployment"
+  type        = list(string)
+}
+
+# Set app server purpose
+variable "instance_type" {
+  type = string
+  default = "t2.micro"
+}
+
+
+// VPC Variables for working envs
+variable "servers" {
+  default = ["dev", "staging", "prod"]
+  type    = list(any)
+}
+
+//  VPC-SEC group ports Variables
+variable "ssh_port" {
+  description = "The port for SSH connections"
+  type        = number
+  default     = 22 // To allow SSH connections
+}
+// variables for inbound  rules on security groups
+variable "https_port" {
+  description = "The port for HTTPS connections"
+  type        = number
+  default     = 443
+}
+
+// variables for inbound  rules on security groups
+variable "http_port" {
+  description = "The port for HTTP connections"
+  type        = number
+  default     = 80
+}
+
+# Variable to set the target group protocol
+variable "protocol_tg" {
+  type    = string
+  default = "HTTP"
+}
+
+variable "status_tg" {
+  type    = string
+  default = "HTTP_301"
+}
+
+# Variable for user data script
+variable "user_data_script" {
+  type    = string
+  default = "user_data.sh"
+}
+
+// Allow traffic from anywhere (world) to these IPs and Port
+variable "ingress_cidr_blocks" {
+  description = "List of CIDR blocks for ingress traffic"
+  type        = list(string)
+  default     = ["0.0.0.0/0"] // This CIDR blocks (allowing traffic from anywhere)
+}
+
+// variables for inbound  rules on security groups
+variable "allow_ports" {
+  description = "The port for all connections"
+  type        = number
+  default     = 0
+}
+
+// variables for outbound  rules on security groups
+variable "egress_ports" {
+  description = "List of egress ports to be opened"
+  type        = list(number)
+  default     = [0, 80, 443] // egress ports (allowing outbound traffic on ports 0, 80, and 443)
+}
+
+variable "egress_cidr_blocks" {
+  description = "List of CIDR blocks for egress traffic"
+  type        = list(string)
+  default     = ["0.0.0.0/0"] // Example CIDR blocks (allowing traffic to anywhere)
+}
+
+variable "key_name" {
+  description = "ssh key name"
+  type        = string
+  default     = "id_rsa.pub"
+}
+
+variable "root_size" {
+  type        = number
+  default     = 9
+  description = "Size of the root volume"
+}
 ```
 In order not to **hard-code** values in our **configuration**, we can include **variables to make the configuration more dynamic and secured. It adds another level of sucurity to sensitive information. 
 
@@ -433,6 +536,123 @@ resource "aws_nat_gateway" "ngw" {
     Name = "${local.resource_name}-ngw"
   }
 }
+
+################################################################################
+# Declaring Resources for EC2 
+################################################################################
+
+# Create instance SSH key pair
+resource "aws_key_pair" "nginx_auth" {
+  key_name   = var.key_name
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+
+# Create Instance. 
+# Defining EC2 instance
+resource "aws_instance" "ec2_web" {
+  ami               = data.aws_ami.ubuntu_latest.id
+  instance_type     = var.instance_type
+  vpc_security_group_ids = [data.aws_ssm_parameter.sg.value]
+  subnet_id = data.aws_ssm_parameter.private-subnet-2.value
+  availability_zone = var.availability_zones[1]
+  user_data         = file("userdata.tpl")
+  associate_public_ip_address = true
+  root_block_device {
+    volume_size = var.root_size
+  }
+  tags = {
+    Name = "${var.name}-Nginx-Server"
+  }
+}
+
+# # create Application balancer
+resource "aws_lb" "application_load_balancer" {
+  name                       = "${local.resource_name}-alb"
+  internal                   = false
+  load_balancer_type         = "application"
+  security_groups            = [data.aws_ssm_parameter.alb_sg.value]
+  subnets                    = [for subnet in [data.aws_ssm_parameter.public-subnet-1.value, data.aws_ssm_parameter.public-subnet-2.value] : subnet]
+  enable_deletion_protection = false
+
+  tags = {
+    Name = "${local.resource_name}-ALB"
+  }
+}
+
+# create target group and attach to the instance 
+resource "aws_lb_target_group" "alb_target_group" {
+  name     = "${local.resource_name}-Alb-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = data.aws_ssm_parameter.vpc_id.value
+
+  health_check {
+    path                = "/healthz"
+    interval            = 30
+    port                = var.http_port
+    timeout             = 5
+    unhealthy_threshold = 2
+    healthy_threshold   = 4
+  }
+  depends_on = [aws_lb.application_load_balancer]
+  tags = {
+    Name = "${local.resource_name}-TG"
+  }
+}
+
+# create a listener on port 80 with redirect action
+resource "aws_lb_listener" "alb_http_listener" {
+  load_balancer_arn = aws_lb.application_load_balancer.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = var.https_port
+      protocol    = var.protocol_tg
+      status_code = var.status_tg
+    }
+  }
+}
+
+resource "aws_launch_template" "Autoscaling-server" {
+  name_prefix            = "${local.resource_name}-lunch-template"
+  image_id               = data.aws_ami.ubuntu_latest.image_id
+  instance_type          = var.instance_type
+  key_name               = var.key_name
+  vpc_security_group_ids = [data.aws_ssm_parameter.auto_sg.value]
+}
+
+# Attach target groups to alb
+resource "aws_lb_target_group_attachment" "ec2-instances1" {
+  target_group_arn = aws_lb_target_group.alb_target_group.arn
+  target_id        = aws_instance.ec2_web.id
+  port             = 80
+}
+
+# Create Auto Scaling Group
+resource "aws_autoscaling_group" "Auto-sg" {
+  name                = "Nginx-Autoscaling group"
+  desired_capacity    = 1
+  max_size            = 2
+  min_size            = 1
+  force_delete        = true
+  target_group_arns   = [aws_lb_target_group.alb_target_group.arn]
+  health_check_type   = "EC2"
+  vpc_zone_identifier = [data.aws_ssm_parameter.private-subnet-1.value, data.aws_ssm_parameter.private-subnet-2.value]
+
+  launch_template {
+    id      = aws_launch_template.Autoscaling-server.id
+    version = "$Latest"
+  }
+  tag {
+    key                 = "Name"
+    value               = "Autoscaling-server"
+    propagate_at_launch = true
+  }
+}
 ```
 4. **Output vpc** configuration: Create a new file under the vpc folder called **outputs.tf** with the following configuration.
 ```
@@ -450,6 +670,25 @@ output "vpc_cidr_block" {
 # Output Public IP
 output "web_server_public_ip" {
   value = aws_eip.elastic_web.public_ip
+}
+
+output "public_ipv4_address" {
+  value = aws_instance.ec2_web.public_ip
+}
+
+# Output Private IP
+output "web_server_private_ip" {
+  value = aws_instance.ec2_web.private_ip
+}
+
+# Output Web Server ID
+output "web_server_id" {
+  value = aws_instance.ec2_web.id
+}
+
+# Output AMI Image Name
+output "ami_name" {
+  value = data.aws_ami.ubuntu_latest
 }
 ```
 The output of this script is a JSON object containing the **vpc id**, **vpc cidr block and the **elastic ip address**. **Terraform output** can be used to connect Terraform projects with other parts of an infrastructure, or with other Terraform projects.  
