@@ -1024,14 +1024,12 @@ git commit -m "Added configuration files"
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/5829bdc0-764a-4dba-8e81-5ce280d6e282)<p>
 
 The GitHub pipeline action has run and execute the paln command. We need to apply the plan by selecting the option **Apply** .<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/6b3ff47e-1ab7-4b8b-9a62-b9e8a890bb3d)<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/16f60b57-954b-44e0-894f-45c58e5e2951)<p>
 
-
-created the resources in the AWS successfully.<p>
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/6b3ff47e-1ab7-4b8b-9a62-b9e8a890bb3d)<p>
-
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/6e7e83f0-b2dd-4e72-804a-9ec5eb53acef)<p>
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/3a4aaefd-29c0-4ca0-98a4-8699e4cc760b)<p>
+Select workflow option, **Apply** and run it. <p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/9674c840-f5b2-4978-b12d-d2fe43d7f202)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/28322412-a732-4a20-b83f-3465edfdf3d1)<p>
 
 We can confirm in the AWS management console if the VPC resources and details have been created.<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/2363c674-993a-464d-bd54-9b3b92a5bb3c)<p>
