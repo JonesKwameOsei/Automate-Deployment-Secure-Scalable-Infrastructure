@@ -909,8 +909,12 @@ git status
 git commit -m "Added configuration files"
 ```
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/44d460ce-cb54-4aef-aa60-482a965f5197)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/474a824e-31f7-4d68-bd27-8ace03979b43)<p>
 
-6. Create and merge pull request 
+6. Push the changes, Create and merge pull request <p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/c751c561-6df6-4245-9e90-a32282aa4541)<p>
+
+
 
 
 
