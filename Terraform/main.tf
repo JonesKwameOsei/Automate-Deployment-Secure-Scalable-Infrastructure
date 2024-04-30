@@ -274,6 +274,7 @@ resource "aws_nat_gateway" "ngw" {
 resource "aws_instance" "ec2_web" {
   ami               = data.aws_ami.ubuntu_latest.id
   instance_type     = var.instance_type
+  key_name = "tfKey"
   vpc_security_group_ids = [data.aws_ssm_parameter.sg.value]
   subnet_id = data.aws_ssm_parameter.private-subnet-2.value
   availability_zone = var.availability_zones[1]
