@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Terraform
+        working-directory: Terraform-EC2
 
     steps:
     - name: Checkout Repo
