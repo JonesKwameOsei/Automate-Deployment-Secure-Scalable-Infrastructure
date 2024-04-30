@@ -847,49 +847,93 @@ This project uses a GitHub Actions workflow and **pipeline** to automate the cod
 - Run `terraform validate` to check the configuration syntax and validity.
 - Run `terraform apply` to deploy the infrastructure changes.
 
-This workflow eliminates the need for manual command-line deployment, making the process more efficient and reliable. It configured like this:
+#### Dealing with Dependant Workflow Pipelines Actions
+To run two separate GitHub Actions workflows for creating a VPC and an EC2 instance without errors, it is recommended to ensure that they do not interfere with each other and that any dependencies between them are properly managed. We can achieve this by:
+
+- **Creating Separate Workflows**: Create separate workflow files for creating the VPC and the EC2 instance, e.g., vpc.yml and ec2.yml.
+
+- **Dependency Management**: If the workflow for creating the EC2 instance depends on the previously created VPC, ensure that the VPC creation workflow completes successfully before triggering the EC2 instance workflow. This can be achieved by using **job dependencies** or **by triggering the EC2 instance workflow as a subsequent step in the VPC workflow**.
+
+- Resource Naming: Ensure that the resources created by one workflow do not conflict with the resources created by the other workflow (e.g., security groups, subnets). Use unique names or identifiers for the resources created by each workflow.
+
+- AWS Credentials: Ensure that both workflows have access to the necessary AWS credentials (access key and secret key) to interact with the AWS services. We can store these credentials as GitHub secrets and use them in your workflow files.
+
+- Error Handling: Implement error handling and retries in the workflows to handle transient errors or failures. Use conditional statements and try/catch blocks for this purpose.<p.
+
+These workflows eliminate the need for manual command-line deployment, making the process more efficient and reliable. It configured like this:
 
 ```
-name: Deploy Infrastructe
+name: Deploy VPC
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
   deploy_site:
-    name: Terraform AWS Infra Deployment
+    name: Terraform Deploy VPC-Resources
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Terraform
+# setting these environment variables globally for all steps using the env section at the job level
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+    - name: Checkout Repo
+      uses: actions/checkout@v4
 
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: eu-west-2
-          role-to-assume: arn:aws:iam::194626909496:role/GithubActions
-          role-session-name: github-actions
+    - name: Terraform init 
+      run: terraform init 
+      
+    - name: Terraform Validate
+      run: terraform validate
+          
+    - name: Terraform Plan 
+      run: terraform plan 
+        
+    - name: Terraform apply 
+      run: terraform apply --auto-approve 
+```
+```
+name: Deploy EC2 Instance
 
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.6.6"
+on:
+  workflow_run:
+    workflows: ["Create VPC"]
+    types:
+      - completed
 
-      - name: Terraform init
-        id: init
-        run: terraform init
+jobs:
+  create-ec2:
+    name: Terraform Deploy Nginx AWS EC2
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Terraform-EC2
+# setting these environment variables globally for all steps using the env section at the job level
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Terraform apply
-        id: apply
-        run: terraform apply --auto-approve
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Terraform init 
+      run: terraform init 
+      
+    - name: Terraform Validate
+      run: terraform validate
+          
+    - name: Terraform Plan 
+      run: terraform plan 
+        
+    - name: Terraform apply 
+      run: terraform apply --auto-approve 
 ```
 2. Create a new branch to push changes into the main repo branch
 ```
@@ -909,20 +953,21 @@ git status
 ```
 git commit -m "Added configuration files"
 ```
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/44d460ce-cb54-4aef-aa60-482a965f5197)<p>
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/474a824e-31f7-4d68-bd27-8ace03979b43)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/96f5454f-7389-4f55-bbd4-0b4015ce9c20)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/21f07ddf-d4cc-45bd-b027-7c18826dbfcd)<p>
 
 6. Push the changes, Create and merge pull request <p>
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/c751c561-6df6-4245-9e90-a32282aa4541)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/30b19eea-7826-4a87-826c-9f88eaf0e0e1)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/5829bdc0-764a-4dba-8e81-5ce280d6e282)<p>
 
 The GitHub pipeline action has run and created the resources in the AWS successfully.<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/6e7e83f0-b2dd-4e72-804a-9ec5eb53acef)<p>
 
 We can confirm in the AWS management console if the VPC resources and details have been created.<p>
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/d3bfef90-83f6-437f-af2d-876bd1010576)<p>
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/84e4d7da-0060-4a78-b235-75a051dac5dc)<p>
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/cf07006b-bda3-48bd-b32a-5ed1627281c5)<p>
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/361a664c-30a1-4977-9563-430da756dc3c)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/2363c674-993a-464d-bd54-9b3b92a5bb3c)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/907f4eb2-f660-49b4-8730-750922ee6afa)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/1b5baa78-2690-4b45-bd8a-9ed8409e0aa9)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/a8a0a072-5116-4658-ab71-22cd1db6a920)<p>
 
 SSmPaameter Store:
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/4587c0d6-f961-4b30-aa7d-59eca767ab25)
