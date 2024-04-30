@@ -1,44 +1,34 @@
+name: Deploy VPC
 
-# name: Deploy Infrastructure
+on:
+  push:
+    branches:
+      - main
 
-# on:
-#   push:
-#     branches:
-#       - main
+jobs:
+  deploy_site:
+    name: Terraform Deploy VPC-Resources
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Terraform
 
-# permissions:
-#   contents: read
-#   id-token: write
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-# jobs:
-#   deploy_site:
-#     name: Terraform Deploy VPC-Resources
-#     runs-on: ubuntu-latest
-#     defaults:
-#       run:
-#         working-directory: Terraform
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
 
-#     steps:
-#     - name: Checkout Repo
-#       uses: actions/checkout@v4
-
-#     - name: Terraform init 
-#       run: terraform init 
-#       env: 
-#         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Terraform init 
+      run: terraform init 
       
-#     - name: Terraform Validate
-#       run: terraform validate
+    - name: Terraform Validate
+      run: terraform validate
           
-#     - name: Terraform Plan 
-#       run: terraform plan
-#       env: 
-#         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Terraform Plan 
+      run: terraform plan 
         
-#     - name: Terraform apply 
-#       run: terraform apply --auto-approve 
-#       env: 
-#         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Terraform apply 
+      run: terraform apply --auto-approve 
