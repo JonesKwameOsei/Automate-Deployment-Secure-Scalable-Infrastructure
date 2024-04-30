@@ -21,9 +21,6 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY }}
 
     runs-on: ubuntu-latest 
-    # defaults:
-    #   run:
-    #     working-directory: Terraform
 
     steps:
     - name: Checkout
