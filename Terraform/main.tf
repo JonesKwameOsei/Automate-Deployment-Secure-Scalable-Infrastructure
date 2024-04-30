@@ -243,7 +243,7 @@ ingress {
 
 # Assinging elastic IP to be attached to the NAT Gateway
 resource "aws_eip" "elastic_web" {
-vpc      = true
+domain      = "vpc"
   tags = {
     Name = "${local.resource_name}-Elastic_IP"
   }
