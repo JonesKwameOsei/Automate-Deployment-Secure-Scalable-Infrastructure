@@ -1014,7 +1014,7 @@ git status
 ```
 5. Commit the changes to a staging area
 ```
-git commit -m "Added configuration files"
+git commit -m "Added configuration files" 
 ```
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/96f5454f-7389-4f55-bbd4-0b4015ce9c20)<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/21f07ddf-d4cc-45bd-b027-7c18826dbfcd)<p>
