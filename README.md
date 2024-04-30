@@ -1031,7 +1031,10 @@ Select workflow option, **Apply** and run it. <p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/281e736b-0479-44d5-84a8-07dbef84e013)<p>
 
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/9674c840-f5b2-4978-b12d-d2fe43d7f202)<p>
+Pipeline actions running:<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/28322412-a732-4a20-b83f-3465edfdf3d1)<p>
+Pipeline has created resources successfully:<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/af76d277-3fcd-4d5d-af33-7e550c54293d)<p>
 
 We can confirm in the AWS management console if the VPC resources and details have been created.<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/2363c674-993a-464d-bd54-9b3b92a5bb3c)<p>
