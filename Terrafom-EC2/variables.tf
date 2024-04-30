@@ -2,7 +2,7 @@
 # Declaring Variables for Resources
 ################################################################################
 
-# set variables for VPC name
+# Set default resource name
 variable "name" {
   description = "The instance name as prefix to be attached to almost every resource name"
   type        = string
@@ -23,18 +23,12 @@ variable "availability_zones" {
   type        = list(string)
 }
 
-// Varibles for vpc configurations
-variable "cidr_block" {
-  type        = list(string)
-  default     = ["10.0.0.0/16", "10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24", "0.0.0.0/0"]
-  description = "CIDR blocks for VPC, subnet and security group"
+# Set app server purpose
+variable "instance_type" {
+  type = string
+  default = "t2.micro"
 }
 
-# variable "private_route_cidr" {
-#   description = "The CIDR range to be used for the private route table"
-#   type        = string
-#   default     = "0.0.0.0/0"
-# }
 
 // VPC Variables for working envs
 variable "servers" {
@@ -48,7 +42,6 @@ variable "ssh_port" {
   type        = number
   default     = 22 // To allow SSH connections
 }
-
 // variables for inbound  rules on security groups
 variable "https_port" {
   description = "The port for HTTPS connections"
@@ -58,9 +51,26 @@ variable "https_port" {
 
 // variables for inbound  rules on security groups
 variable "http_port" {
-  description = "The port for HTTPS connections"
+  description = "The port for HTTP connections"
   type        = number
   default     = 80
+}
+
+# Variable to set the target group protocol
+variable "protocol_tg" {
+  type    = string
+  default = "HTTP"
+}
+
+variable "status_tg" {
+  type    = string
+  default = "HTTP_301"
+}
+
+# Variable for user data script
+variable "user_data_script" {
+  type    = string
+  default = "user_data.sh"
 }
 
 // Allow traffic from anywhere (world) to these IPs and Port
@@ -70,21 +80,34 @@ variable "ingress_cidr_blocks" {
   default     = ["0.0.0.0/0"] // This CIDR blocks (allowing traffic from anywhere)
 }
 
+// variables for inbound  rules on security groups
+variable "allow_ports" {
+  description = "The port for all connections"
+  type        = number
+  default     = 0
+}
+
 // variables for outbound  rules on security groups
 variable "egress_ports" {
   description = "List of egress ports to be opened"
-  type        = number
-  default     = 0 // egress ports (allowing outbound traffic on ports 0, 80, and 443)
+  type        = list(number)
+  default     = [0, 80, 443] // egress ports (allowing outbound traffic on ports 0, 80, and 443)
 }
 
 variable "egress_cidr_blocks" {
   description = "List of CIDR blocks for egress traffic"
   type        = list(string)
-  default     = ["0.0.0.0/0"] // CIDR blocks (allowing traffic to anywhere)
+  default     = ["0.0.0.0/0"] // Example CIDR blocks (allowing traffic to anywhere)
 }
 
-variable "private_ips" {
-  type        = list(string)
-  default     = ["10.0.0.50"]
-  description = "Private IP for EC2 instance"
+variable "key_name" {
+  description = "ssh key name"
+  type        = string
+  default     = "id_rsa.pub"
+}
+
+variable "root_size" {
+  type        = number
+  default     = 9
+  description = "Size of the root volume"
 }
