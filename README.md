@@ -899,6 +899,7 @@ git checkout -b deployNginxWebapp
 ```
 git add .
 ```
+**N/B**: We need to comment out resource, data and output blocks for AWS Amazon EC2 since some resource depends on some details being created and stored in SSM parameter store. For instance, the `vpc id`, `security groups`, and `subnets` for the EC2 depends on the details stored in SSM parameter store. This is done to obsfucate sensitive infomation.
 
 4. Check the files modified
 ```
@@ -913,6 +914,34 @@ git commit -m "Added configuration files"
 
 6. Push the changes, Create and merge pull request <p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/c751c561-6df6-4245-9e90-a32282aa4541)<p>
+
+The GitHub pipeline action has run and created the resources in the AWS successfully.<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/6e7e83f0-b2dd-4e72-804a-9ec5eb53acef)<p>
+
+We can confirm in the AWS management console if the VPC resources and details have been created.<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/d3bfef90-83f6-437f-af2d-876bd1010576)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/84e4d7da-0060-4a78-b235-75a051dac5dc)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/cf07006b-bda3-48bd-b32a-5ed1627281c5)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/361a664c-30a1-4977-9563-430da756dc3c)<p>
+
+SSmPaameter Store:
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/4587c0d6-f961-4b30-aa7d-59eca767ab25)
+
+## Create EC2 Instance for the Nginx Server with GitHub Actions Pipeline
+Having created the **VPC** resources and stored the details in the **ssm parameter store**, we can create the **EC2 instance** by:
+1. Uncomment the EC2 resouce, data and out blocks.
+2. Push and merge the changes to trigger the ppipeline actions. <p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/46c2009c-b8bf-421c-bb6b-d5abfb434157)<p>
+Merged pull request.<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/f7c44936-2f48-49c0-bccb-b9d8edc666cd)<p>
+Pipeline actions running.<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/011f86e1-e17f-4912-b6fe-c999355da8c8)
+
+
+
+
+
+
 
 
 
