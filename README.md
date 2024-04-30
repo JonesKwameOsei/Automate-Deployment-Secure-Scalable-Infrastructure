@@ -833,6 +833,17 @@ terraform fmt
 ```
 The commmand automatically updates the configurations in the **vpc** directory for **readability** and **consistency**. 
 
+## Code Deployment with GitHub Actions
+To deploy the code in the configration files, we will use GitHub actions instead of the command line. <p>
+
+To automate the deployment process, this project includes a GitHub Actions workflow. The workflow consists of the following steps in a **yaml** file called **actions.yaml**:
+
+1. **Checkout the repository**: Checkout the code from the repository.
+2. **Setup Terraform**: Install the necessary Terraform version and Azure provider.
+3. **Initialize Terraform**: Run `terraform init` to initialize the working directory.
+4. **Validate Terraform configuration**: Run `terraform validate` to check the syntax and validity of the Terraform configuration.
+5. **Apply Terraform changes**: Run `terraform apply` to deploy the infrastructure changes.
+
 
 
 
