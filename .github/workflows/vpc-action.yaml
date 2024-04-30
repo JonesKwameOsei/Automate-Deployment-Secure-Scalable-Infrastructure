@@ -1,4 +1,4 @@
-name: Deploy VPC
+name: Deploy Infra
 
 on:
   workflow_dispatch:
@@ -11,69 +11,56 @@ on:
         - destroy
         required: true
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
-  deploy_vpc:
-    name: Terraform Deploy VPC-Resources
-    runs-on: ubuntu-latest
+  terraform:
+    name: 'Terraform'
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY }}
+
+    runs-on: ubuntu-latest 
     defaults:
       run:
         working-directory: Terraform
 
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
     steps:
-    - name: Checkout Repo
+    - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Terraform init 
-      run: terraform init 
-    
-    - name: Check if VPC exists
-      id: check_vpc
-      run: |
-        if terraform state show aws_vpc.my_vpc >/dev/null 2>&1; then
-          echo "::set-output name=vpc_exists::true"
-        else
-          echo "::set-output name=vpc_exists::false"
-        fi
-      
-    - name: Terraform Validate
-      run: terraform validate
-          
-    - name: Terraform Plan 
-      run: terraform plan 
-        
-    - name: Terraform Apply
-      if: ${{ github.event.inputs.terraform_action == 'apply' && steps.check_vpc.outputs.vpc_exists != 'true' }}
-      run: terraform apply --auto-approve 
-
-    - name: Terraform Destroy
-      if: ${{ github.event.inputs.terraform_action == 'destroy' && steps.check_vpc.outputs.vpc_exists == 'true' }}
-      run: terraform destroy --auto-approve  
-
-  trigger_ec2_workflow:
-    needs: deploy_vpc
-    runs-on: ubuntu-latest
-    steps:
-    - name: Trigger EC2 Workflow
-      uses: actions/github-script@0.10.7
+    - name: Terraform Init
+      uses: hashicorp/terraform-github-actions@master
       with:
-        script: |
-          const { data: workflows } = await github.actions.listRepoWorkflows({
-            owner: context.repo.owner,
-            repo: context.repo.repo
-          });
+        tf_actions_version: 0.14.3
+        tf_actions_subcommand: 'init'
+        tf_actions_working_dir: '.'
+        tf_actions_comment: true
 
-          const ec2Workflow = workflows.workflows.find(workflow => workflow.name === "Deploy EC2 Instance");
-          if (ec2Workflow) {
-            await github.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: ec2Workflow.id
-            });
-          }
+    - name: Terraform plan
+      uses: hashicorp/terraform-github-actions@master
+      with:
+        tf_actions_version: 0.14.3
+        tf_actions_subcommand: 'plan'
+        tf_actions_working_dir: '.'
+        tf_actions_comment: true
+      
+    - name: Terraform apply
+      if: ${{ github.event.inputs.terraform_action == 'apply' }}
+      uses: hashicorp/terraform-github-actions@master
+      with:
+        tf_actions_version: 0.14.3
+        tf_actions_subcommand: ${{ github.event.inputs.terraform_action }}
+        tf_actions_working_dir: '.'
+        tf_actions_comment: true
+        args: '-auto-approve'
+    
+    - name: Terraform destroy
+      if: ${{ github.event.inputs.terraform_action == 'destroy' }}
+      uses: hashicorp/terraform-github-actions@master
+      with:
+        tf_actions_version: 0.14.3
+        tf_actions_subcommand: ${{ github.event.inputs.terraform_action }}
+        tf_actions_working_dir: '.'
+        tf_actions_comment: true
+        args: '-auto-approve'
