@@ -40,10 +40,12 @@ jobs:
       run: terraform plan 
         
     - name: Terraform Apply
+      if: ${{ github.event.inputs.terraform_action == 'apply' }}
       run: terraform apply --auto-approve 
 
     - name: Terraform Destroy
-      run: terraform destroy --auto-approve  
+      if: ${{ github.event.inputs.terraform_action == 'destroy' }}
+      run: terraform destroy --auto-approve 
 
   trigger_ec2_workflow:
     needs: deploy_vpc
