@@ -290,7 +290,7 @@ resource "aws_instance" "ec2_web" {
 
 # # create Application balancer
 resource "aws_lb" "application_load_balancer" {
-  name                       = "${local.resource_name}-alb"
+  name                       = "${local.resource_name}-Alb"
   internal                   = false
   load_balancer_type         = "application"
   security_groups            = [data.aws_ssm_parameter.alb_sg.value]
