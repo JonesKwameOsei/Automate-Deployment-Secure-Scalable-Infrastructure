@@ -1023,11 +1023,13 @@ git commit -m "Added configuration files"
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/30b19eea-7826-4a87-826c-9f88eaf0e0e1)<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/5829bdc0-764a-4dba-8e81-5ce280d6e282)<p>
 
-The GitHub pipeline action has run and execute the paln command. We need to apply the plan by selecting the option **Apply** .<p>
+The GitHub pipeline action has run and execute the paln command. We need to apply the plan by selecting the option **Apply**.<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/6b3ff47e-1ab7-4b8b-9a62-b9e8a890bb3d)<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/16f60b57-954b-44e0-894f-45c58e5e2951)<p>
 
 Select workflow option, **Apply** and run it. <p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/281e736b-0479-44d5-84a8-07dbef84e013)<p>
+
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/9674c840-f5b2-4978-b12d-d2fe43d7f202)<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/28322412-a732-4a20-b83f-3465edfdf3d1)<p>
 
