@@ -264,10 +264,10 @@ resource "aws_nat_gateway" "ngw" {
 ################################################################################
 
 # Create instance SSH key pair
-resource "aws_key_pair" "nginx_auth" {
-  key_name   = var.key_name
-  public_key = file("C:/Users/KWAME/.ssh/id_rsa")
-}
+# resource "aws_key_pair" "nginx_auth" {
+#   key_name   = var.key_name
+#   public_key = file("C:/Users/KWAME/.ssh/id_rsa")
+# }
 
 # Create Instance. 
 # Defining EC2 instance
