@@ -32,15 +32,6 @@ jobs:
 
     - name: Terraform init 
       run: terraform init 
-    
-    - name: Check if VPC exists
-      id: check_vpc
-      run: |
-        if terraform state show aws_vpc.my_vpc >/dev/null 2>&1; then
-          echo "::set-output name=vpc_exists::true"
-        else
-          echo "::set-output name=vpc_exists::false"
-        fi
       
     - name: Terraform Validate
       run: terraform validate
@@ -49,11 +40,9 @@ jobs:
       run: terraform plan 
         
     - name: Terraform Apply
-      # if: ${{ github.event.inputs.terraform_action == 'apply' && steps.check_vpc.outputs.vpc_exists != 'false' }}
       run: terraform apply --auto-approve 
 
     - name: Terraform Destroy
-      # if: ${{ github.event.inputs.terraform_action == 'destroy' && steps.check_vpc.outputs.vpc_exists == 'false' }}
       run: terraform destroy --auto-approve  
 
   trigger_ec2_workflow:
@@ -63,6 +52,7 @@ jobs:
     - name: Trigger EC2 Workflow
       uses: actions/github-script@0.10.7
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const { data: workflows } = await github.actions.listRepoWorkflows({
             owner: context.repo.owner,
