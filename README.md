@@ -833,18 +833,63 @@ terraform fmt
 ```
 The commmand automatically updates the configurations in the **vpc** directory for **readability** and **consistency**. 
 
+Here is a condensed version of the text in English:
+
 ## Code Deployment with GitHub Actions
-To deploy the code in the configration files, we will use GitHub actions instead of the command line. <p>
 
-To automate the deployment process, this project includes a GitHub Actions workflow. The workflow consists of the following steps in a **yaml** file called **actions.yaml**:
+This project uses a GitHub Actions workflow to automate the code deployment process. The workflow consists of the following steps:
 
-1. **Checkout the repository**: Checkout the code from the repository.
-2. **Setup Terraform**: Install the necessary Terraform version and Azure provider.
-3. **Initialize Terraform**: Run `terraform init` to initialize the working directory.
-4. **Validate Terraform configuration**: Run `terraform validate` to check the syntax and validity of the Terraform configuration.
-5. **Apply Terraform changes**: Run `terraform apply` to deploy the infrastructure changes.
+1. Checkout the repository to get the code.
+2. Set up the necessary Terraform version and Azure provider.
+3. Run `terraform init` to initialize the working directory.
+4. Run `terraform validate` to check the configuration syntax and validity.
+5. Run `terraform apply` to deploy the infrastructure changes.
 
+This workflow eliminates the need for manual command-line deployment, making the process more efficient and reliable.
 
+```
+
+name: Deploy Infrastructe
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy_site:
+    name: Terraform AWS Infra Deployment
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Terraform
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-west-2
+          role-to-assume: arn:aws:iam::194626909496:role/GithubActions
+          role-session-name: github-actions
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
+      - name: Terraform init
+        id: init
+        run: terraform init
+
+      - name: Terraform apply
+        id: apply
+        run: terraform apply --auto-approve
+```
 
 
 
