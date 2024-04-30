@@ -860,24 +860,33 @@ To run two separate GitHub Actions workflows for creating a VPC and an EC2 insta
 
 - Error Handling: Implement error handling and retries in the workflows to handle transient errors or failures. Use conditional statements and try/catch blocks for this purpose.<p.
 
-These workflows eliminate the need for manual command-line deployment, making the process more efficient and reliable. It configured like this:
+These workflows eliminate the need for manual command-line deployment, making the process more efficient and reliable. We will configure the workflows with options as to **apply** the plan or **destroy** the infrastructure after deployment. It configured like this:
 
 ```
 name: Deploy VPC
 
 on:
+  workflow_dispatch:
+    inputs:
+      terraform_action:
+        type: choice
+        description: select terraform action
+        options:
+        - apply
+        - destroy
+        required: true
   push:
     branches:
       - main
 
 jobs:
-  deploy_site:
+  deploy_vpc:
     name: Terraform Deploy VPC-Resources
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Terraform
-# setting these environment variables globally for all steps using the env section at the job level
+
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -888,6 +897,15 @@ jobs:
 
     - name: Terraform init 
       run: terraform init 
+    
+    - name: Check if VPC exists
+      id: check_vpc
+      run: |
+        if terraform state show aws_vpc.my_vpc >/dev/null 2>&1; then
+          echo "::set-output name=vpc_exists::true"
+        else
+          echo "::set-output name=vpc_exists::false"
+        fi
       
     - name: Terraform Validate
       run: terraform validate
@@ -895,29 +913,62 @@ jobs:
     - name: Terraform Plan 
       run: terraform plan 
         
-    - name: Terraform apply 
+    - name: Terraform Apply
+      if: ${{ github.event.inputs.terraform_action == 'apply' && steps.check_vpc.outputs.vpc_exists != 'true' }}
       run: terraform apply --auto-approve 
+
+    - name: Terraform Destroy
+      if: ${{ github.event.inputs.terraform_action == 'destroy' && steps.check_vpc.outputs.vpc_exists == 'true' }}
+      run: terraform destroy --auto-approve  
+
+  trigger_ec2_workflow:
+    needs: deploy_vpc
+    runs-on: ubuntu-latest
+    steps:
+    - name: Trigger EC2 Workflow
+      uses: actions/github-script@0.10.7
+      with:
+        script: |
+          const { data: workflows } = await github.actions.listRepoWorkflows({
+            owner: context.repo.owner,
+            repo: context.repo.repo
+          });
+
+          const ec2Workflow = workflows.workflows.find(workflow => workflow.name === "Deploy EC2 Instance");
+          if (ec2Workflow) {
+            await github.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: ec2Workflow.id
+            });
+          }
+
 ```
 ```
 name: Deploy EC2 Instance
 
 on:
   workflow_run:
-    workflows: ["Create VPC"]
+    workflows: ["Deploy VPC"]
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      terraform_action:
+        type: choice
+        description: select terraform action
+        options:
+        - apply
+        - destroy
+        required: true
 
 jobs:
-  create-ec2:
-    name: Terraform Deploy Nginx AWS EC2
+  deploy_ec2:
+    name: Terraform Deploy EC2 Instance
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Terraform-EC2
-# setting these environment variables globally for all steps using the env section at the job level
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
     - name: Checkout Repo
@@ -925,6 +976,15 @@ jobs:
 
     - name: Terraform init 
       run: terraform init 
+    
+    - name: Check if VPC exists
+      id: check_vpc
+      run: |
+        if terraform state show aws_vpc.my_vpc >/dev/null 2>&1; then
+          echo "::set-output name=vpc_exists::true"
+        else
+          echo "::set-output name=vpc_exists::false"
+        fi
       
     - name: Terraform Validate
       run: terraform validate
@@ -932,8 +992,13 @@ jobs:
     - name: Terraform Plan 
       run: terraform plan 
         
-    - name: Terraform apply 
+    - name: Terraform Apply
+      if: ${{ github.event.inputs.terraform_action == 'apply' && steps.check_vpc.outputs.vpc_exists != 'true' }}
       run: terraform apply --auto-approve 
+
+    - name: Terraform Destroy
+      if: ${{ github.event.inputs.terraform_action == 'destroy' && steps.check_vpc.outputs.vpc_exists == 'true' }}
+      run: terraform destroy --auto-approve  
 ```
 2. Create a new branch to push changes into the main repo branch
 ```
@@ -943,8 +1008,6 @@ git checkout -b deployNginxWebapp
 ```
 git add .
 ```
-**N/B**: We need to comment out resource, data and output blocks for AWS Amazon EC2 since some resource depends on some details being created and stored in SSM parameter store. For instance, the `vpc id`, `security groups`, and `subnets` for the EC2 depends on the details stored in SSM parameter store. This is done to obsfucate sensitive infomation.
-
 4. Check the files modified
 ```
 git status
@@ -960,8 +1023,15 @@ git commit -m "Added configuration files"
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/30b19eea-7826-4a87-826c-9f88eaf0e0e1)<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/5829bdc0-764a-4dba-8e81-5ce280d6e282)<p>
 
-The GitHub pipeline action has run and created the resources in the AWS successfully.<p>
+The GitHub pipeline action has run and execute the paln command. We need to apply the plan by selecting the option **Apply** .<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/16f60b57-954b-44e0-894f-45c58e5e2951)<p>
+
+
+created the resources in the AWS successfully.<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/6b3ff47e-1ab7-4b8b-9a62-b9e8a890bb3d)<p>
+
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/6e7e83f0-b2dd-4e72-804a-9ec5eb53acef)<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/3a4aaefd-29c0-4ca0-98a4-8699e4cc760b)<p>
 
 We can confirm in the AWS management console if the VPC resources and details have been created.<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/2363c674-993a-464d-bd54-9b3b92a5bb3c)<p>
@@ -969,8 +1039,8 @@ We can confirm in the AWS management console if the VPC resources and details ha
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/1b5baa78-2690-4b45-bd8a-9ed8409e0aa9)<p>
 ![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/a8a0a072-5116-4658-ab71-22cd1db6a920)<p>
 
-SSmPaameter Store:
-![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/4587c0d6-f961-4b30-aa7d-59eca767ab25)
+SSmPaameter Store:<p>
+![image](https://github.com/JonesKwameOsei/Automate-Deployment-Secure-Scalable-Infrastructure/assets/81886509/4587c0d6-f961-4b30-aa7d-59eca767ab25)<p>
 
 ## Create EC2 Instance for the Nginx Server with GitHub Actions Pipeline
 Having created the **VPC** resources and stored the details in the **ssm parameter store**, we can create the **EC2 instance** by:
